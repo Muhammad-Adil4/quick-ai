@@ -3,10 +3,19 @@
 import React, { useEffect, useState } from "react";
 import { Gem, Sparkles } from "lucide-react";
 import { Protect } from "@clerk/clerk-react";
-import CreationItems from "@/components/CreationItems"; // ✅ Absolute import (Next.js convention)
+import CreationItems from "@/components/CreationItems";
 
-// Dummy data ko yaha define kar rahe hain (API ke jagah abhi hardcoded)
-const dummyCreationData = [
+// ✅ Define CreationItem type
+interface CreationItem {
+  id: string | number;
+  prompt: string;
+  type: "text" | "image" | "file" | "video" | "audio";
+  content: string;
+  created_at: string | Date;
+}
+
+// ✅ Dummy data properly typed
+const dummyCreationData: CreationItem[] = [
   {
     id: 1,
     prompt: "Generate a blog title about AI in healthcare",
@@ -21,26 +30,33 @@ const dummyCreationData = [
     content: "https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0",
     created_at: new Date(),
   },
+  {
+    id: 3,
+    prompt: "Generate a video idea for AI tutorial",
+    type: "video",
+    content: "https://example.com/video.mp4",
+    created_at: new Date(),
+  },
+  {
+    id: 4,
+    prompt: "Generate an audio snippet about AI podcast",
+    type: "audio",
+    content: "https://example.com/audio.mp3",
+    created_at: new Date(),
+  },
 ];
-
-interface CreationItem {
-  id: string | number;
-  prompt: string;
-  type: "text" | "image" | "file" | "video" | "audio";
-  content: string;
-  created_at: string | Date;
-}
 
 const Dashboard: React.FC = () => {
   const [creations, setCreations] = useState<CreationItem[]>([]);
 
   useEffect(() => {
-    // Future: yaha API call kar sakte ho
+    // Set dummy data on mount
     setCreations(dummyCreationData);
   }, []);
 
   return (
     <div className="h-full overflow-y-scroll p-6">
+      {/* Cards */}
       <div className="flex justify-start gap-4 flex-wrap">
         {/* Total Creations Card */}
         <div className="flex justify-between items-center w-72 p-4 px-6 bg-white rounded-xl border border-gray-200">
