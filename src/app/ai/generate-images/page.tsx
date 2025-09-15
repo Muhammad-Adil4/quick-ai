@@ -4,7 +4,6 @@ import React, { useState, FormEvent } from "react";
 import { Image as ImageIcon, Sparkles, Loader2, RefreshCw } from "lucide-react";
 import Image from "next/image";
 
-// 🎨 Styles with colors
 const Styles: { name: string; color: string }[] = [
   { name: "Realistic", color: "bg-green-100 text-green-700 border-green-300" },
   { name: "Cartoon", color: "bg-yellow-100 text-yellow-700 border-yellow-300" },
@@ -36,7 +35,6 @@ const GenerateImage: React.FC = () => {
 
     setLoading(true);
     try {
-      // Mock image generation
       await new Promise((res) => setTimeout(res, 1500));
       setImage(
         `https://picsum.photos/seed/${encodeURIComponent(input)}-style-${selectedStyle}/600/400`
@@ -58,11 +56,10 @@ const GenerateImage: React.FC = () => {
   return (
     <div className="min-h-screen p-3 sm:p-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6 h-full">
-        {/* Left Panel */}
         <form
           onSubmit={handleForm}
           className="flex flex-col bg-white rounded-2xl border border-gray-200 p-3 sm:p-6 min-h-[280px] sm:min-h-[360px] max-h-[360px] sm:max-h-[480px]"
-          style={{ boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)" }}
+          style={{ boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.05)" }}
         >
           <div className="flex items-center gap-2 mb-3 sm:mb-4">
             <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
@@ -78,7 +75,7 @@ const GenerateImage: React.FC = () => {
             onChange={(e) => setInput(e.target.value)}
             type="text"
             placeholder="e.g. A futuristic city skyline at sunset"
-            className="w-full mt-2 p-2 px-3 text-xs sm:text-sm border border-gray-300 rounded-md outline-none focus:border-indigo-500"
+            className="w-full mt-2 p-2 sm:p-3 text-xs sm:text-sm border border-gray-300 rounded-md outline-none focus:border-indigo-500"
           />
 
           <p className="mt-4 sm:mt-6 font-semibold text-xs sm:text-sm">Select Style</p>
@@ -89,13 +86,12 @@ const GenerateImage: React.FC = () => {
                 <span
                   key={style.name}
                   onClick={() => setSelectedStyle(style.name)}
-                  className={`text-xs px-3 sm:px-4 py-1 rounded-full border cursor-pointer transition 
-                    ${
-                      isSelected
-                        ? style.color
-                        : "text-gray-500 border-gray-300 hover:bg-gray-100"
-                    }`}
-                  style={{ boxShadow: isSelected ? "0 2px 4px -1px rgba(0, 0, 0, 0.1)" : "none" }}
+                  className={`text-xs px-3 sm:px-4 py-1 rounded-full border cursor-pointer transition ${
+                    isSelected
+                      ? style.color
+                      : "text-gray-500 border-gray-300 hover:bg-gray-100"
+                  }`}
+                  style={{ boxShadow: isSelected ? "0 2px 4px -1px rgba(0,0,0,0.1)" : "none" }}
                 >
                   {style.name}
                 </span>
@@ -103,11 +99,8 @@ const GenerateImage: React.FC = () => {
             })}
           </div>
 
-          {error && (
-            <p className="mt-3 sm:mt-4 text-red-500 text-xs font-medium">{error}</p>
-          )}
+          {error && <p className="mt-3 sm:mt-4 text-red-500 text-xs font-medium">{error}</p>}
 
-          {/* Buttons */}
           <div className="mt-4 flex flex-col sm:flex-row gap-2 sm:gap-3">
             <button
               type="submit"
@@ -117,13 +110,9 @@ const GenerateImage: React.FC = () => {
                 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600
                 text-white px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg 
                 transition-all duration-300 disabled:opacity-70"
-              style={{ boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)" }}
+              style={{ boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.05)" }}
             >
-              {loading ? (
-                <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
-              ) : (
-                <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-              )}
+              {loading ? <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" /> : <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5" />}
               {loading ? "Generating..." : "Generate Image"}
             </button>
 
@@ -131,19 +120,18 @@ const GenerateImage: React.FC = () => {
               type="button"
               onClick={handleReset}
               className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg bg-gray-50 hover:bg-gray-200 text-gray-700 transition-all duration-200"
-              style={{ boxShadow: "0 2px 4px -1px rgba(0, 0, 0, 0.1)" }}
+              style={{ boxShadow: "0 2px 4px -1px rgba(0,0,0,0.1)" }}
             >
               <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4" /> Reset
             </button>
           </div>
         </form>
 
-        {/* Right Panel */}
         <div
           className={`flex flex-col bg-white rounded-2xl border border-gray-200 p-3 sm:p-6 min-h-[280px] sm:min-h-[360px] ${
             image ? "max-h-[400px] sm:max-h-[560px]" : "max-h-[360px] sm:max-h-[480px]"
           } transition-max-height duration-500`}
-          style={{ boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)" }}
+          style={{ boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.05)" }}
         >
           <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
             <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-500" />
@@ -162,14 +150,14 @@ const GenerateImage: React.FC = () => {
                   alt="Generated"
                   fill
                   className="object-contain rounded-lg"
-                  style={{ boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)" }}
+                  style={{ boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.05)" }}
                 />
               </div>
               <a
                 href={image}
                 download="generated-image.png"
                 className="px-3 sm:px-4 py-2 text-xs sm:text-sm bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
-                style={{ boxShadow: "0 2px 4px -1px rgba(0, 0, 0, 0.1)" }}
+                style={{ boxShadow: "0 2px 4px -1px rgba(0,0,0,0.1)" }}
               >
                 Download Image
               </a>
@@ -180,7 +168,7 @@ const GenerateImage: React.FC = () => {
                 <ImageIcon className="w-10 h-10 sm:w-12 sm:h-12 mb-2 sm:mb-3 opacity-60" />
                 <p>
                   Enter a description and select a style, then click{" "}
-                  <span className="font-medium">"Generate Image"</span>.
+                  <span className="font-medium">&quot;Generate Image&quot;</span>.
                 </p>
               </div>
             </div>

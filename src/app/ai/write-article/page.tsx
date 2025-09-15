@@ -4,7 +4,6 @@ import React, { useState, FormEvent } from "react";
 import { Edit, Sparkles, Loader2, FileText } from "lucide-react";
 import Markdown from "react-markdown";
 
-// Article length options type
 interface ArticleLengthOption {
   value: number;
   label: string;
@@ -37,11 +36,10 @@ export default function WriteArticle() {
     }
 
     setLoading(true);
-
     setTimeout(() => {
       setArticle(
-        `# ${topic}\n\nThis is a **dummy generated article** about "${topic}".  
-        It is approximately ${selectedLength} words long.\n\nYou can replace this with real API data.`
+        `# ${topic}\n\nThis is a **dummy generated article** about &quot;${topic}&quot;.  
+It is approximately ${selectedLength} words long.\n\nYou can replace this with real API data.`
       );
       setLoading(false);
     }, 1500);
@@ -100,9 +98,7 @@ export default function WriteArticle() {
             })}
           </div>
 
-          {error && (
-            <p className="mt-4 text-red-500 text-xs font-medium">{error}</p>
-          )}
+          {error && <p className="mt-4 text-red-500 text-xs font-medium">{error}</p>}
 
           <div className="mt-6 flex gap-3">
             <button
@@ -110,11 +106,7 @@ export default function WriteArticle() {
               disabled={loading}
               className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-4 py-2 text-sm rounded-lg shadow-md disabled:opacity-70"
             >
-              {loading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <Edit className="w-5 h-5" />
-              )}
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Edit className="w-5 h-5" />}
               {loading ? "Generating..." : "Generate Article"}
             </button>
 
@@ -154,7 +146,7 @@ export default function WriteArticle() {
                   <FileText className="w-10 h-10 text-gray-300" />
                   <p>
                     Enter a topic and choose <b>article length</b>, then click{" "}
-                    <span className="font-medium">"Generate Article"</span> to get
+                    <span className="font-medium">&quot;Generate Article&quot;</span> to get
                     started.
                   </p>
                 </div>
