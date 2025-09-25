@@ -36,7 +36,7 @@ const ReviewResume: React.FC = () => {
       const token = await getToken();
       const formdata = new FormData()
       formdata.append("resume",file)
-      const {data} = await axios.post('http://localhost:3000/api/ai/Resume-Review',formdata,{
+      const {data} = await axios.post('http://localhost:3000/api/ai/resume-review',formdata,{
         headers:{
          Authorization: `Bearer ${token}`,
         }

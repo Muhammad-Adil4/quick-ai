@@ -48,7 +48,7 @@ const RemoveBackground: React.FC = () => {
       formdata.append("image", imageFile);
 
       const { data } = await axios.post(
-        "http://localhost:3000/api/ai/RemoveBackground",
+        "http://localhost:3000/api/ai/remove-background",
         formdata,
         {
           headers: {

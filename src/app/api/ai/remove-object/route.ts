@@ -1,6 +1,6 @@
 import { checkUserPlan } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { removeImageBackgroundObject } from "@/lib/services/RemoveObject";
+import { removeImageBackgroundObject } from "@/lib/services/remove-object";
 import { uploadToCloudinary } from "@/lib/uploadImage";
 import { getAuth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
