@@ -1,9 +1,10 @@
+// src/app/api/ai/Resume-Review/route.ts
+export const runtime = "nodejs";
+
 import { checkUserPlan } from "@/lib/auth";
 import Ai from "@/lib/services/geminiService";
 import { getAuth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
-import pdfParse from "pdf-parse";
-import mammoth from "mammoth"; // DOCX parsing
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
@@ -49,19 +50,42 @@ export async function POST(req: NextRequest) {
     const arrayBuffer = await resumeFile.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // 6️⃣ Extract Text
+    // 6️⃣ Extract Text (dynamic imports to avoid build-time evaluation)
     let resumeText = "";
-    const mimeType = resumeFile.type;
+    const mimeType = (resumeFile as Blob).type;
 
     if (mimeType === "application/pdf") {
-      const data = await pdfParse(buffer);
-      resumeText = data.text;
+      // dynamically import pdf-parse
+      try {
+        const pdfParseModule = await import("pdf-parse");
+        const pdfParse = (pdfParseModule && (pdfParseModule.default || pdfParseModule)) as (
+          buf: Buffer
+        ) => Promise<{ text: string }>;
+        const data = await pdfParse(buffer);
+        resumeText = data.text ?? "";
+      } catch (e) {
+        console.error("Error loading/using pdf-parse:", e);
+        return NextResponse.json(
+          { success: false, message: "Failed to parse PDF resume" },
+          { status: 500 }
+        );
+      }
     } else if (
       mimeType ===
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     ) {
-      const result = await mammoth.extractRawText({ buffer });
-      resumeText = result.value;
+      // dynamically import mammoth
+      try {
+        const mammoth = await import("mammoth");
+        const result = await mammoth.extractRawText({ buffer });
+        resumeText = result.value ?? "";
+      } catch (e) {
+        console.error("Error loading/using mammoth:", e);
+        return NextResponse.json(
+          { success: false, message: "Failed to parse DOCX resume" },
+          { status: 500 }
+        );
+      }
     } else if (mimeType === "text/plain") {
       resumeText = buffer.toString("utf-8");
     } else {
@@ -122,10 +146,7 @@ ${resumeText}`;
     if (err instanceof Error) {
       message = err.message;
     }
-    console.error("Resume Review API Error:", message);
-    return NextResponse.json(
-      { success: false, message },
-      { status: 500 }
-    );
+    console.error("Resume Review API Error:", message, err);
+    return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }
