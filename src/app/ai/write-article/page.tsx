@@ -182,8 +182,8 @@ const WriteArticle: React.FC = () => {
                 <FileText className="w-10 h-10 text-gray-300" />
                 <p>
                   Enter a topic and choose <b>article length</b>, then click{" "}
-                  <span className="font-medium">"Generate Article"</span> to get
-                  started.
+                  <span className="font-medium">{`"Generate Article"`}</span> to
+                  get started.
                 </p>
               </div>
             )}

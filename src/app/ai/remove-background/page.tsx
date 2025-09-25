@@ -11,7 +11,7 @@ import {
   Download,
 } from "lucide-react";
 import Image from "next/image";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import { useAuth } from "@clerk/nextjs";
 import toast from "react-hot-toast";
 

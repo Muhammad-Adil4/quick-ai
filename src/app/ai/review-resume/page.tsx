@@ -3,7 +3,7 @@
 import React, { useState, ChangeEvent } from "react";
 import { FileText, Loader2, RefreshCw, Wand2 } from "lucide-react";
 import Markdown from "react-markdown";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import toast from "react-hot-toast";
 import { useAuth } from "@clerk/nextjs";
 
