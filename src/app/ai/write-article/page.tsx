@@ -3,6 +3,9 @@
 import React, { useState, FormEvent } from "react";
 import { Edit, Sparkles, Loader2, FileText } from "lucide-react";
 import Markdown from "react-markdown";
+import axios from "axios";
+import { useAuth } from "@clerk/nextjs";
+import toast from "react-hot-toast";
 
 interface ArticleLengthOption {
   value: number;
@@ -21,28 +24,55 @@ export default function WriteArticle() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [article, setArticle] = useState<string>("");
-
+  const {getToken } = useAuth()
+  const   token = getToken()
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     if (!topic.trim()) {
       setError("⚠ Please enter a topic.");
+      setLoading(false);
       return;
     }
     if (!selectedLength) {
       setError("⚠ Please select article length.");
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
-    setTimeout(() => {
-      setArticle(
-        `# ${topic}\n\nThis is a **dummy generated article** about &quot;${topic}&quot;.  
-It is approximately ${selectedLength} words long.\n\nYou can replace this with real API data.`
+    try {
+      // ✅ Get Clerk auth token
+      const token = await getToken();
+
+      const objdata = { topic, length: selectedLength };
+
+      const { data } = await axios.post(
+        "/api/ai/generate-article",
+        objdata,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
+
+      if (data.success) {
+        toast.success(data.message);
+        console.log(data.article.content);
+        
+        setArticle(data.article.content);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (err: any) {
+      toast.error(
+        err.response?.data?.message || err.message || "Something went wrong!"
+      );
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   const handleReset = () => {
@@ -98,7 +128,9 @@ It is approximately ${selectedLength} words long.\n\nYou can replace this with r
             })}
           </div>
 
-          {error && <p className="mt-4 text-red-500 text-xs font-medium">{error}</p>}
+          {error && (
+            <p className="mt-4 text-red-500 text-xs font-medium">{error}</p>
+          )}
 
           <div className="mt-6 flex gap-3">
             <button
@@ -106,7 +138,11 @@ It is approximately ${selectedLength} words long.\n\nYou can replace this with r
               disabled={loading}
               className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-4 py-2 text-sm rounded-lg shadow-md disabled:opacity-70"
             >
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Edit className="w-5 h-5" />}
+              {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Edit className="w-5 h-5" />
+              )}
               {loading ? "Generating..." : "Generate Article"}
             </button>
 
@@ -146,8 +182,10 @@ It is approximately ${selectedLength} words long.\n\nYou can replace this with r
                   <FileText className="w-10 h-10 text-gray-300" />
                   <p>
                     Enter a topic and choose <b>article length</b>, then click{" "}
-                    <span className="font-medium">&quot;Generate Article&quot;</span> to get
-                    started.
+                    <span className="font-medium">
+                      &quot;Generate Article&quot;
+                    </span>{" "}
+                    to get started.
                   </p>
                 </div>
               </div>
