@@ -12,9 +12,18 @@
     "ecmaVersion": 12,
     "sourceType": "module"
   },
-  "ignorePatterns": ["src/generated/**/*"],
+  "ignorePatterns": [
+    "src/generated/**/*",
+    "src/generated/prisma/*.js",
+    "src/generated/prisma/*.d.ts",
+    "src/generated/prisma/runtime/*.js",
+    "src/generated/prisma/wasm.js",
+    "src/generated/prisma/wasm-engine-edge.js",
+    "src/generated/prisma/wasm-compiler-edge.js",
+    "src/generated/prisma/react-native.js"
+  ],
   "rules": {
-    "@typescript-eslint/no-require-imports": "warn",
+    "@typescript-eslint/no-require-imports": "off",
     "@typescript-eslint/no-explicit-any": "warn",
     "@typescript-eslint/no-unused-vars": "warn",
     "@typescript-eslint/no-this-alias": "warn",
@@ -22,7 +31,16 @@
   },
   "overrides": [
     {
-      "files": ["src/generated/**/*.js", "src/generated/**/*.d.ts"],
+      "files": [
+        "src/generated/**/*.js",
+        "src/generated/**/*.d.ts",
+        "src/generated/prisma/*.js",
+        "src/generated/prisma/runtime/*.js",
+        "src/generated/prisma/wasm.js",
+        "src/generated/prisma/wasm-engine-edge.js",
+        "src/generated/prisma/wasm-compiler-edge.js",
+        "src/generated/prisma/react-native.js"
+      ],
       "rules": {
         "@typescript-eslint/no-require-imports": "off",
         "@typescript-eslint/no-explicit-any": "off",

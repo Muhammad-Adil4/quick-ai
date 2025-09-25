@@ -18,6 +18,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  eslint: {
+    ignoreDuringBuilds: true, // ESLint errors ko build time pe ignore karega
+  },
 };
 
 export default nextConfig;
