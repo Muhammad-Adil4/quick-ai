@@ -3,7 +3,7 @@
 import React, { useState, FormEvent } from "react";
 import { Edit, Sparkles, Loader2, RefreshCw } from "lucide-react";
 import Markdown from "react-markdown";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { useAuth } from "@clerk/nextjs";
 import toast from "react-hot-toast";
 
@@ -26,6 +26,7 @@ export default function BlogTitles() {
   const [error, setError] = useState<string>("");
   const [blogTitle, setBlogTitle] = useState<string>("");
   const { getToken } = useAuth();
+
   const handleForm = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
@@ -57,18 +58,21 @@ export default function BlogTitles() {
       );
       if (data.success) {
         toast.success(data.message);
-        setBlogTitle(data.blogTitle.content)
+        setBlogTitle(data.blogTitle.content);
       } else {
         toast.error(data.message);
       }
-    } catch (error: any) {
-      toast.error(
-        error.response?.data?.message ||
-          error.message ||
-          "Something went wrong!"
-      );
-    }finally{
-      setLoading(false)
+    } catch (err: unknown) {
+      // ✅ Type-safe error handling
+      if (err instanceof AxiosError) {
+        toast.error(err.response?.data?.message || err.message);
+      } else if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("Something went wrong!");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -78,6 +82,7 @@ export default function BlogTitles() {
     setBlogTitle("");
     setError("");
   };
+
 
   return (
     <div className="min-h-screen p-3 sm:p-6">

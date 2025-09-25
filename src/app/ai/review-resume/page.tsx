@@ -3,7 +3,7 @@
 import React, { useState, ChangeEvent } from "react";
 import { FileText, Loader2, RefreshCw, Wand2 } from "lucide-react";
 import Markdown from "react-markdown";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import toast from "react-hot-toast";
 import { useAuth } from "@clerk/nextjs";
 
@@ -12,7 +12,8 @@ const ReviewResume: React.FC = () => {
   const [resumeReview, setResumeReview] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
-  const {getToken} = useAuth()
+  const { getToken } = useAuth();
+
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     setError("");
     const uploaded = e.target.files?.[0] ?? null;
@@ -34,13 +35,17 @@ const ReviewResume: React.FC = () => {
 
     try {
       const token = await getToken();
-      const formdata = new FormData()
-      formdata.append("resume",file)
-      const {data} = await axios.post('http://localhost:3000/api/ai/resume-review',formdata,{
-        headers:{
-         Authorization: `Bearer ${token}`,
+      const formData = new FormData();
+      formData.append("resume", file);
+
+      const { data } = await axios.post(
+        "http://localhost:3000/api/ai/resume-review",
+        formData,
+        {
+          headers: { Authorization: `Bearer ${token}` },
         }
-      })
+      );
+
       if (data.success) {
         toast.success(data.message);
         setResumeReview(data.resumedata.content);
@@ -48,8 +53,17 @@ const ReviewResume: React.FC = () => {
         toast.error(data.message);
         setError(data.message);
       }
-    } catch {
-      setError("❌ Failed to review resume. Try again.");
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.message || err.message);
+        toast.error(err.response?.data?.message || err.message);
+      } else if (err instanceof Error) {
+        setError(err.message);
+        toast.error(err.message);
+      } else {
+        setError("❌ Failed to review resume. Try again.");
+        toast.error("❌ Failed to review resume. Try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -65,10 +79,7 @@ const ReviewResume: React.FC = () => {
     <div className="min-h-screen p-3 sm:p-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6 h-full">
         {/* Left Panel */}
-        <div
-          className="flex flex-col bg-white rounded-2xl border border-gray-200 p-3 sm:p-6 min-h-[280px] sm:min-h-[360px] max-h-[360px] sm:max-h-[480px]"
-          style={{ boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)" }}
-        >
+        <div className="flex flex-col bg-white rounded-2xl border border-gray-200 p-3 sm:p-6 min-h-[280px] sm:min-h-[360px] max-h-[360px] sm:max-h-[480px] shadow-md">
           {/* Title */}
           <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-6">
             <Wand2 className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />
@@ -111,22 +122,16 @@ const ReviewResume: React.FC = () => {
             <button
               onClick={handleReview}
               disabled={loading}
-              className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg transition-all duration-300 disabled:opacity-70"
-              style={{ boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)" }}
+              className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg transition-all duration-300 disabled:opacity-70 shadow-md"
             >
-              {loading ? (
-                <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
-              ) : (
-                <Wand2 className="w-4 h-4 sm:w-5 sm:h-5" />
-              )}
+              {loading ? <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" /> : <Wand2 className="w-4 h-4 sm:w-5 sm:h-5" />}
               {loading ? "Analyzing..." : "Review Resume"}
             </button>
 
             <button
               type="button"
               onClick={handleReset}
-              className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg hover:bg-gray-100 transition-all duration-200"
-              style={{ boxShadow: "0 2px 4px -1px rgba(0, 0, 0, 0.1)" }}
+              className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg hover:bg-gray-100 transition-all duration-200 shadow-sm"
             >
               <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4" /> Reset
             </button>
@@ -134,19 +139,12 @@ const ReviewResume: React.FC = () => {
         </div>
 
         {/* Right Panel */}
-        <div
-          className={`flex flex-col bg-white rounded-2xl border border-gray-200 p-3 sm:p-6 min-h-[280px] sm:min-h-[360px] ${
-            resumeReview ? "max-h-[400px] sm:max-h-[560px]" : "max-h-[360px] sm:max-h-[480px]"
-          } transition-max-height duration-500`}
-          style={{ boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)" }}
-        >
-          {/* Title Fixed */}
+        <div className={`flex flex-col bg-white rounded-2xl border border-gray-200 p-3 sm:p-6 min-h-[280px] sm:min-h-[360px] ${resumeReview ? "max-h-[400px] sm:max-h-[560px]" : "max-h-[360px] sm:max-h-[480px]"} transition-max-height duration-500 shadow-md`}>
           <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 border-b border-gray-200">
             <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
             <h2 className="text-base sm:text-xl font-semibold text-gray-800">Review Report</h2>
           </div>
 
-          {/* Scrollable Content */}
           <div className="flex-1 p-3 sm:p-6 overflow-y-auto">
             {loading ? (
               <div className="flex-1 flex items-center justify-center text-gray-400">
@@ -157,7 +155,7 @@ const ReviewResume: React.FC = () => {
                 <div className="p-3 sm:p-4 rounded-lg bg-gray-50 border border-gray-200">
                   <h3 className="font-semibold text-gray-700 mb-1 sm:mb-2">AI Feedback</h3>
                   <p className="text-gray-700 whitespace-pre-line">
-                    <Markdown>{resumeReview || ""}</Markdown>
+                    <Markdown>{resumeReview}</Markdown>
                   </p>
                 </div>
               </div>

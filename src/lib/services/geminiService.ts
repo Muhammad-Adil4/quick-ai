@@ -17,9 +17,14 @@ const Ai = async (prompt: string, length: number = 300): Promise<string> => {
     });
 
     return response.choices?.[0]?.message?.content ?? "No content generated";
-  } catch (error: any) {
-    console.error("Gemini AI error:", error.message || error);
-    return "Error generating content";
+  } catch (err: unknown) {
+    // Handle unknown instead of any
+    let message = "Error generating content";
+    if (err instanceof Error) {
+      message = err.message;
+    }
+    console.error("Gemini AI error:", message);
+    return message;
   }
 };
 

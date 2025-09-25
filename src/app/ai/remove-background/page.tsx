@@ -11,7 +11,7 @@ import {
   Download,
 } from "lucide-react";
 import Image from "next/image";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { useAuth } from "@clerk/nextjs";
 import toast from "react-hot-toast";
 
@@ -51,9 +51,7 @@ const RemoveBackground: React.FC = () => {
         "http://localhost:3000/api/ai/remove-background",
         formdata,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
@@ -64,8 +62,14 @@ const RemoveBackground: React.FC = () => {
         toast.error(data.message);
         setError(data.message);
       }
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || err.message || "Something went wrong");
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        toast.error(err.response?.data?.message || err.message);
+      } else if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("Something went wrong");
+      }
     } finally {
       setLoading(false);
     }
@@ -78,20 +82,17 @@ const RemoveBackground: React.FC = () => {
     setError("");
   };
 
-  // ✅ Download handler
   const handleDownload = async () => {
     if (!removedBackground) return;
     const response = await fetch(removedBackground);
     const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
-
     const a = document.createElement("a");
     a.href = url;
     a.download = "background-removed.png";
     document.body.appendChild(a);
     a.click();
     a.remove();
-
     window.URL.revokeObjectURL(url);
   };
 
@@ -99,13 +100,11 @@ const RemoveBackground: React.FC = () => {
     <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6 text-slate-700">
       {/* Left Panel - Upload */}
       <div className="flex flex-col bg-white rounded-2xl border border-gray-200 p-6 shadow-lg h-full">
-        {/* Title */}
         <div className="flex items-center gap-3 mb-4">
           <Wand2 className="w-7 h-7 text-purple-500" />
           <h1 className="text-xl font-bold">Background Remover</h1>
         </div>
 
-        {/* File Input */}
         {!image && (
           <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition mb-4">
             <div className="flex flex-col items-center justify-center">
@@ -124,7 +123,6 @@ const RemoveBackground: React.FC = () => {
           </label>
         )}
 
-        {/* Image Preview */}
         {image && (
           <div className="mb-4 relative w-full h-60">
             <Image
@@ -138,18 +136,13 @@ const RemoveBackground: React.FC = () => {
 
         {error && <p className="text-xs text-red-500">{error}</p>}
 
-        {/* Buttons */}
         <div className="mt-4 flex gap-3">
           <button
             onClick={handleRemoveBg}
             disabled={loading}
             className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-2 text-sm rounded-lg shadow-md disabled:opacity-70"
           >
-            {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Scissors className="w-5 h-5" />
-            )}
+            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Scissors className="w-5 h-5" />}
             {loading ? "Processing..." : "Remove Background"}
           </button>
 
@@ -195,8 +188,7 @@ const RemoveBackground: React.FC = () => {
           <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
             <ImageIcon className="w-12 h-12 mb-3 opacity-60" />
             <p className="text-sm text-center">
-              Upload an image and click <b>Remove Background</b> to see the
-              result here.
+              Upload an image and click <b>Remove Background</b> to see the result here.
             </p>
           </div>
         )}

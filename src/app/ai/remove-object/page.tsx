@@ -9,7 +9,7 @@ import {
   Eraser,
 } from "lucide-react";
 import Image from "next/image";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { useAuth } from "@clerk/nextjs";
 import toast from "react-hot-toast";
 
@@ -21,6 +21,7 @@ const RemoveObject: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const { getToken } = useAuth();
+
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     setError("");
     const file = e.target.files?.[0] ?? null;
@@ -46,19 +47,21 @@ const RemoveObject: React.FC = () => {
     setRemovedObject(null);
 
     try {
-      const formdata = new FormData();
-      formdata.append("image", imageFile);
-      formdata.append("prompt", objectDescription);
       const token = await getToken();
+      const formData = new FormData();
+      formData.append("image", imageFile);
+      formData.append("prompt", objectDescription);
+
       const { data } = await axios.post(
         "http://localhost:3000/api/ai/remove-object",
-        formdata,
+        formData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
+
       if (data.success) {
         toast.success(data.message);
         setRemovedObject(data.savedRecord.content);
@@ -66,8 +69,14 @@ const RemoveObject: React.FC = () => {
         toast.error(data.message);
         setError(data.message);
       }
-    } catch {
-      setError("❌ Failed to remove object. Try again.");
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        toast.error(err.response?.data?.message || err.message);
+      } else if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("❌ Failed to remove object. Try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -81,17 +90,25 @@ const RemoveObject: React.FC = () => {
     setError("");
   };
 
+  const handleDownload = () => {
+    if (!removedObject) return;
+    const a = document.createElement("a");
+    a.href = removedObject;
+    a.download = "object-removed.png";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
   return (
     <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6 text-slate-700">
       {/* Left Panel */}
       <div className="flex flex-col bg-white rounded-2xl border border-gray-200 p-6 shadow-lg h-full">
-        {/* Title */}
         <div className="flex items-center gap-3 mb-4">
           <Eraser className="w-7 h-7 text-red-500" />
           <h1 className="text-xl font-bold">Remove Object</h1>
         </div>
 
-        {/* File Upload */}
         {!image && (
           <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition mb-4">
             <div className="flex flex-col items-center justify-center">
@@ -110,7 +127,6 @@ const RemoveObject: React.FC = () => {
           </label>
         )}
 
-        {/* Image Preview */}
         {image && (
           <div className="mb-4 relative w-full h-60">
             <Image
@@ -122,7 +138,6 @@ const RemoveObject: React.FC = () => {
           </div>
         )}
 
-        {/* Object Description */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Describe object to remove
@@ -138,18 +153,13 @@ const RemoveObject: React.FC = () => {
 
         {error && <p className="text-xs text-red-500">{error}</p>}
 
-        {/* Buttons */}
         <div className="mt-4 flex gap-3">
           <button
             onClick={handleRemoveObject}
             disabled={loading}
             className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-2 text-sm rounded-lg shadow-md hover:opacity-90 transition disabled:opacity-70"
           >
-            {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Scissors className="w-5 h-5" />
-            )}
+            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Scissors className="w-5 h-5" />}
             {loading ? "Processing..." : "Remove Object"}
           </button>
 
@@ -184,20 +194,18 @@ const RemoveObject: React.FC = () => {
                 className="object-contain rounded-lg shadow-md"
               />
             </div>
-            <a
-              href={removedObject}
-              download="object-removed.png"
+            <button
+              onClick={handleDownload}
               className="px-4 py-2 text-sm bg-green-500 text-white rounded-lg shadow hover:bg-green-600 transition"
             >
               Download Image
-            </a>
+            </button>
           </div>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
             <Eraser className="w-12 h-12 mb-3 opacity-60" />
             <p className="text-sm text-center">
-              Upload an image, describe the object, then click{" "}
-              <b>Remove Object</b> to see the result here.
+              Upload an image, describe the object, then click <b>Remove Object</b> to see the result here.
             </p>
           </div>
         )}

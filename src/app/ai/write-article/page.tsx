@@ -3,7 +3,7 @@
 import React, { useState, FormEvent } from "react";
 import { Edit, Sparkles, Loader2, FileText } from "lucide-react";
 import Markdown from "react-markdown";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { useAuth } from "@clerk/nextjs";
 import toast from "react-hot-toast";
 
@@ -18,13 +18,14 @@ const articleLengthOptions: ArticleLengthOption[] = [
   { value: 1600, label: "Long (1500+ words)" },
 ];
 
-export default function WriteArticle() {
+const WriteArticle: React.FC = () => {
   const [selectedLength, setSelectedLength] = useState<number | null>(null);
   const [topic, setTopic] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [article, setArticle] = useState<string>("");
-  const {getToken } = useAuth()
+  const { getToken } = useAuth();
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
@@ -35,6 +36,7 @@ export default function WriteArticle() {
       setLoading(false);
       return;
     }
+
     if (!selectedLength) {
       setError("⚠ Please select article length.");
       setLoading(false);
@@ -42,33 +44,33 @@ export default function WriteArticle() {
     }
 
     try {
-      // ✅ Get Clerk auth token
       const token = await getToken();
+      const payload = { topic, length: selectedLength };
 
-      const objdata = { topic, length: selectedLength };
-
-      const { data } = await axios.post(
-        "/api/ai/generate-article",
-        objdata,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const { data } = await axios.post("/api/ai/generate-article", payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       if (data.success) {
         toast.success(data.message);
-        console.log(data.article.content);
-        
         setArticle(data.article.content);
       } else {
         toast.error(data.message);
+        setError(data.message);
       }
-    } catch (err: any) {
-      toast.error(
-        err.response?.data?.message || err.message || "Something went wrong!"
-      );
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        const axiosErr = err as AxiosError<{ message: string }>;
+        const message = axiosErr.response?.data?.message || axiosErr.message;
+        toast.error(message);
+        setError(message);
+      } else if (err instanceof Error) {
+        toast.error(err.message);
+        setError(err.message);
+      } else {
+        toast.error("❌ Something went wrong!");
+        setError("❌ Something went wrong!");
+      }
     } finally {
       setLoading(false);
     }
@@ -87,41 +89,41 @@ export default function WriteArticle() {
         {/* Left Panel - Form */}
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col bg-white rounded-2xl border min-h-[400px] max-h-[400px] border-gray-200 p-6 shadow-lg"
+          className="flex flex-col bg-white rounded-2xl border border-gray-200 p-6 min-h-[400px] max-h-[400px] shadow-lg"
         >
           <div className="flex items-center gap-3 mb-4">
             <Sparkles className="w-7 h-7 text-blue-500" />
             <h1 className="text-xl font-bold">AI Article Writer</h1>
           </div>
 
-          <label className="mt-2 font-semibold text-sm" htmlFor="topic">
+          <label htmlFor="topic" className="mt-2 font-semibold text-sm">
             Article Topic
           </label>
           <input
             id="topic"
+            type="text"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            type="text"
             placeholder="e.g. The Future of Artificial Intelligence"
-            className="w-full mt-2 p-3 text-sm border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-400 transition"
+            className="w-full mt-2 p-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none transition"
           />
 
           <p className="mt-6 font-semibold text-sm">Select Article Length</p>
           <div className="mt-3 flex flex-wrap gap-3">
-            {articleLengthOptions.map((item) => {
-              const isSelected = selectedLength === item.value;
+            {articleLengthOptions.map((opt) => {
+              const isSelected = selectedLength === opt.value;
               return (
                 <button
+                  key={opt.value}
                   type="button"
-                  key={item.value}
-                  onClick={() => setSelectedLength(item.value)}
+                  onClick={() => setSelectedLength(opt.value)}
                   className={`text-sm px-4 py-2 rounded-full border transition shadow-sm ${
                     isSelected
                       ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-blue-500"
                       : "text-gray-600 border-gray-300 hover:bg-gray-100"
                   }`}
                 >
-                  {item.label}
+                  {opt.label}
                 </button>
               );
             })}
@@ -161,14 +163,14 @@ export default function WriteArticle() {
             article ? "max-h-[600px]" : "max-h-[400px]"
           } transition-max-height duration-500`}
         >
-          <div className="flex items-center gap-3 mb-4 flex-shrink-0">
+          <div className="flex items-center gap-3 mb-4">
             <FileText className="w-6 h-6 text-indigo-500" />
             <h2 className="text-lg font-semibold">Generated Article</h2>
           </div>
 
           <div className="overflow-y-auto flex-1">
             {loading ? (
-              <div className="flex-1 flex items-center justify-center text-gray-400">
+              <div className="flex items-center justify-center text-gray-400">
                 <Loader2 className="w-10 h-10 animate-spin" />
               </div>
             ) : article ? (
@@ -176,17 +178,13 @@ export default function WriteArticle() {
                 <Markdown>{article}</Markdown>
               </div>
             ) : (
-              <div className="flex-1 flex items-center justify-center text-sm text-gray-400">
-                <div className="flex flex-col items-center gap-4 text-center">
-                  <FileText className="w-10 h-10 text-gray-300" />
-                  <p>
-                    Enter a topic and choose <b>article length</b>, then click{" "}
-                    <span className="font-medium">
-                      &quot;Generate Article&quot;
-                    </span>{" "}
-                    to get started.
-                  </p>
-                </div>
+              <div className="flex flex-col items-center justify-center gap-4 text-center text-sm text-gray-400 h-full">
+                <FileText className="w-10 h-10 text-gray-300" />
+                <p>
+                  Enter a topic and choose <b>article length</b>, then click{" "}
+                  <span className="font-medium">"Generate Article"</span> to get
+                  started.
+                </p>
               </div>
             )}
           </div>
@@ -194,4 +192,6 @@ export default function WriteArticle() {
       </div>
     </div>
   );
-}
+};
+
+export default WriteArticle;

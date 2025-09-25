@@ -24,7 +24,7 @@ export const removeImageBackgroundObject = async ({
       formData,
       {
         headers: {
-          "x-api-key": process.env.CLIPDROP_API_KEY || "",
+          "x-api-key": process.env.CLIPDROP_API_KEY ?? "",
           // Content-Type will be set automatically by FormData
         },
         responseType: "arraybuffer",
@@ -32,8 +32,12 @@ export const removeImageBackgroundObject = async ({
     );
 
     return Buffer.from(response.data);
-  } catch (error: any) {
-    console.error("ClipDrop API Error:", error.message || error);
-    throw new Error("Failed to replace background");
+  } catch (err: unknown) {
+    let message = "Failed to replace background";
+    if (err instanceof Error) {
+      message = err.message;
+    }
+    console.error("ClipDrop API Error:", message);
+    throw new Error(message);
   }
 };

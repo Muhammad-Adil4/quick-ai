@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
+    // 1️⃣ Authentication
     const { userId } = getAuth(req);
     if (!userId) {
       return NextResponse.json(
@@ -14,6 +15,8 @@ export async function POST(req: NextRequest) {
         { status: 401 }
       );
     }
+
+    // 2️⃣ Plan Check
     const { plan } = await checkUserPlan(userId);
     if (plan !== "premium") {
       return NextResponse.json({
@@ -22,41 +25,50 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // 3️⃣ FormData Validation
     const formData = await req.formData();
     const image = formData.get("image");
     const promptValue = formData.get("prompt");
 
-    if (
-      !image ||
-      !(image instanceof Blob) ||
-      !promptValue ||
-      typeof promptValue !== "string"
-    ) {
+    if (!image || !(image instanceof Blob)) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "image and prompt are required for removeBackground",
-        },
+        { success: false, message: "Image file is required" },
         { status: 400 }
       );
     }
+    if (!promptValue || typeof promptValue !== "string") {
+      return NextResponse.json(
+        { success: false, message: "Prompt text is required" },
+        { status: 400 }
+      );
+    }
+
     const prompt = promptValue;
-    const bufferdata = Buffer.from(await image.arrayBuffer());
+
+    // 4️⃣ Convert Blob → Buffer
+    const bufferData = Buffer.from(await image.arrayBuffer());
+
+    // 5️⃣ Remove Image Background
     const resultBuffer = await removeImageBackgroundObject({
-      image: bufferdata,
+      image: bufferData,
       prompt,
     });
+
     if (!resultBuffer) {
       return NextResponse.json({
         success: false,
         message: "Failed to remove background of image",
       });
     }
+
+    // 6️⃣ Upload to Cloudinary
     const imageUrl = await uploadToCloudinary(
       resultBuffer,
       `quickai-${Date.now()}`
     );
-   const savedRecord = await prisma.quickAi.create({
+
+    // 7️⃣ Save record in DB
+    const savedRecord = await prisma.quickAi.create({
       data: {
         userId,
         prompt: "Removing background of Image",
@@ -66,6 +78,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // 8️⃣ Return response
     return NextResponse.json({
       success: true,
       message: "Background removed successfully",
@@ -73,10 +86,15 @@ export async function POST(req: NextRequest) {
       imageUrl,
     });
 
-  } catch (error: any) {
-    console.error("API Error:", error.message || error);
+  } catch (err: unknown) {
+    let message = "Unknown error";
+    if (err instanceof Error) {
+      message = err.message;
+    }
+    console.error("API Error:", message);
+
     return NextResponse.json(
-      { success: false, message: error.message || "Unknown error" },
+      { success: false, message },
       { status: 500 }
     );
   }

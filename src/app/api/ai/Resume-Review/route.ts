@@ -3,7 +3,7 @@ import Ai from "@/lib/services/geminiService";
 import { getAuth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import pdfParse from "pdf-parse";
-import mammoth from "mammoth"; // Added for DOCX parsing
+import mammoth from "mammoth"; // DOCX parsing
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
@@ -117,10 +117,14 @@ ${resumeText}`;
       message: "Resume review generated and saved successfully",
       resumedata,
     });
-  } catch (error: any) {
-    console.error("Resume Review API Error:", error.message || error);
+  } catch (err: unknown) {
+    let message = "Unknown error";
+    if (err instanceof Error) {
+      message = err.message;
+    }
+    console.error("Resume Review API Error:", message);
     return NextResponse.json(
-      { success: false, message: error.message || "Unknown error" },
+      { success: false, message },
       { status: 500 }
     );
   }

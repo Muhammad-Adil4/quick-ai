@@ -3,7 +3,7 @@
 import React, { useState, FormEvent } from "react";
 import { Image as ImageIcon, Sparkles, Loader2, RefreshCw } from "lucide-react";
 import Image from "next/image";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import toast from "react-hot-toast";
 import { useAuth } from "@clerk/nextjs";
 
@@ -61,8 +61,15 @@ const GenerateImage: React.FC = () => {
         toast.error(data.message);
         setError(data.message);
       }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || error.message || "Something went wrong!");
+    } catch (err: unknown) {
+      // ✅ Type-safe error handling
+      if (err instanceof AxiosError) {
+        toast.error(err.response?.data?.message || err.message);
+      } else if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("Something went wrong!");
+      }
     } finally {
       setLoading(false);
     }
@@ -75,7 +82,6 @@ const GenerateImage: React.FC = () => {
     setError("");
   };
 
-  // ✅ Download image using fetch + blob
   const handleDownload = async () => {
     if (!image) return;
     try {
@@ -89,7 +95,7 @@ const GenerateImage: React.FC = () => {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch (err: unknown) {
       toast.error("Failed to download image.");
     }
   };
