@@ -9,6 +9,9 @@ import {
   Eraser,
 } from "lucide-react";
 import Image from "next/image";
+import axios from "axios";
+import { useAuth } from "@clerk/nextjs";
+import toast from "react-hot-toast";
 
 const RemoveObject: React.FC = () => {
   const [image, setImage] = useState<string | null>(null);
@@ -17,7 +20,7 @@ const RemoveObject: React.FC = () => {
   const [objectDescription, setObjectDescription] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
-
+  const { getToken } = useAuth();
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     setError("");
     const file = e.target.files?.[0] ?? null;
@@ -43,9 +46,26 @@ const RemoveObject: React.FC = () => {
     setRemovedObject(null);
 
     try {
-      // Mock object removal: Replace with real API if needed
-      await new Promise((res) => setTimeout(res, 1500));
-      setRemovedObject(image); // For demo, just return original image
+      const formdata = new FormData();
+      formdata.append("image", imageFile);
+      formdata.append("prompt", objectDescription);
+      const token = await getToken();
+      const { data } = await axios.post(
+        "http://localhost:3000/api/ai/remove-object",
+        formdata,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (data.success) {
+        toast.success(data.message);
+        setRemovedObject(data.savedRecord.content);
+      } else {
+        toast.error(data.message);
+        setError(data.message);
+      }
     } catch {
       setError("❌ Failed to remove object. Try again.");
     } finally {
@@ -76,7 +96,9 @@ const RemoveObject: React.FC = () => {
           <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition mb-4">
             <div className="flex flex-col items-center justify-center">
               <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
-              <p className="text-sm text-gray-500">Click to upload or drag & drop</p>
+              <p className="text-sm text-gray-500">
+                Click to upload or drag & drop
+              </p>
               <p className="text-xs text-gray-400">PNG, JPG, JPEG</p>
             </div>
             <input
@@ -123,7 +145,11 @@ const RemoveObject: React.FC = () => {
             disabled={loading}
             className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-2 text-sm rounded-lg shadow-md hover:opacity-90 transition disabled:opacity-70"
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Scissors className="w-5 h-5" />}
+            {loading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Scissors className="w-5 h-5" />
+            )}
             {loading ? "Processing..." : "Remove Object"}
           </button>
 
@@ -170,7 +196,8 @@ const RemoveObject: React.FC = () => {
           <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
             <Eraser className="w-12 h-12 mb-3 opacity-60" />
             <p className="text-sm text-center">
-              Upload an image, describe the object, then click <b>Remove Object</b> to see the result here.
+              Upload an image, describe the object, then click{" "}
+              <b>Remove Object</b> to see the result here.
             </p>
           </div>
         )}

@@ -8,8 +8,12 @@ import {
   Scissors,
   Wand2,
   CheckCircle2,
+  Download,
 } from "lucide-react";
 import Image from "next/image";
+import axios from "axios";
+import { useAuth } from "@clerk/nextjs";
+import toast from "react-hot-toast";
 
 const RemoveBackground: React.FC = () => {
   const [image, setImage] = useState<string | null>(null);
@@ -17,6 +21,7 @@ const RemoveBackground: React.FC = () => {
   const [removedBackground, setRemovedBackground] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const { getToken } = useAuth();
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     setError("");
@@ -38,11 +43,29 @@ const RemoveBackground: React.FC = () => {
     setRemovedBackground(null);
 
     try {
-      // Mock background removal: Replace with real API if needed
-      await new Promise((res) => setTimeout(res, 1500));
-      setRemovedBackground(image); // For demo, just return original image
-    } catch {
-      setError("❌ Failed to remove background. Try again.");
+      const token = await getToken();
+      const formdata = new FormData();
+      formdata.append("image", imageFile);
+
+      const { data } = await axios.post(
+        "http://localhost:3000/api/ai/RemoveBackground",
+        formdata,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (data.success) {
+        toast.success(data.message);
+        setRemovedBackground(data.removeBackgroundImagedata.content);
+      } else {
+        toast.error(data.message);
+        setError(data.message);
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || err.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -53,6 +76,23 @@ const RemoveBackground: React.FC = () => {
     setImageFile(null);
     setRemovedBackground(null);
     setError("");
+  };
+
+  // ✅ Download handler
+  const handleDownload = async () => {
+    if (!removedBackground) return;
+    const response = await fetch(removedBackground);
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "background-removed.png";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    window.URL.revokeObjectURL(url);
   };
 
   return (
@@ -144,13 +184,12 @@ const RemoveBackground: React.FC = () => {
                 className="object-contain rounded-lg shadow-md"
               />
             </div>
-            <a
-              href={removedBackground}
-              download="background-removed.png"
-              className="px-4 py-2 text-sm bg-green-500 text-white rounded-lg shadow hover:bg-green-600 transition"
+            <button
+              onClick={handleDownload}
+              className="flex items-center gap-2 px-4 py-2 text-sm bg-green-500 text-white rounded-lg shadow hover:bg-green-600 transition"
             >
-              Download Image
-            </a>
+              <Download className="w-4 h-4" /> Download Image
+            </button>
           </div>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-gray-400">

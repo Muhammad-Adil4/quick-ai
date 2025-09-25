@@ -3,13 +3,16 @@
 import React, { useState, ChangeEvent } from "react";
 import { FileText, Loader2, RefreshCw, Wand2 } from "lucide-react";
 import Markdown from "react-markdown";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { useAuth } from "@clerk/nextjs";
 
 const ReviewResume: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [resumeReview, setResumeReview] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
-
+  const {getToken} = useAuth()
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     setError("");
     const uploaded = e.target.files?.[0] ?? null;
@@ -30,11 +33,21 @@ const ReviewResume: React.FC = () => {
     setResumeReview(null);
 
     try {
-      // Mock AI resume review
-      await new Promise((res) => setTimeout(res, 1500));
-      setResumeReview(
-        `✅ **AI Feedback:**\n- Your resume layout is clean and professional.\n- Consider adding more metrics to quantify achievements.\n- Check for grammar and consistency in formatting.`
-      );
+      const token = await getToken();
+      const formdata = new FormData()
+      formdata.append("resume",file)
+      const {data} = await axios.post('http://localhost:3000/api/ai/Resume-Review',formdata,{
+        headers:{
+         Authorization: `Bearer ${token}`,
+        }
+      })
+      if (data.success) {
+        toast.success(data.message);
+        setResumeReview(data.resumedata.content);
+      } else {
+        toast.error(data.message);
+        setError(data.message);
+      }
     } catch {
       setError("❌ Failed to review resume. Try again.");
     } finally {
