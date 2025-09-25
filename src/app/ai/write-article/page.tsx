@@ -47,7 +47,9 @@ const WriteArticle: React.FC = () => {
       const token = await getToken();
       const payload = { topic, length: selectedLength };
 
-      const { data } = await axios.post("/api/ai/generate-article", payload, {
+      const { data } = await axios.post(
+  `${process.env.NEXT_PUBLIC_BASE_URL}/api/ai/generate-article`,
+  payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

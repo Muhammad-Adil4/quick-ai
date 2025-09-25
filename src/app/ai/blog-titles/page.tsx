@@ -47,8 +47,8 @@ export default function BlogTitles() {
         topic: input,
         category: selectedCategory,
       };
-      const { data } = await axios.post(
-        "http://localhost:3000/api/ai/generate-blogTitle",
+      const { data } = await await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/ai/generate-blogTitle`,
         obj,
         {
           headers: {
@@ -82,7 +82,6 @@ export default function BlogTitles() {
     setBlogTitle("");
     setError("");
   };
-
 
   return (
     <div className="min-h-screen p-3 sm:p-6">

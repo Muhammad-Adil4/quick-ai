@@ -53,7 +53,7 @@ const RemoveObject: React.FC = () => {
       formData.append("prompt", objectDescription);
 
       const { data } = await axios.post(
-        "http://localhost:3000/api/ai/remove-object",
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/ai/remove-object`,
         formData,
         {
           headers: {
@@ -159,7 +159,11 @@ const RemoveObject: React.FC = () => {
             disabled={loading}
             className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-2 text-sm rounded-lg shadow-md hover:opacity-90 transition disabled:opacity-70"
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Scissors className="w-5 h-5" />}
+            {loading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Scissors className="w-5 h-5" />
+            )}
             {loading ? "Processing..." : "Remove Object"}
           </button>
 
@@ -205,7 +209,8 @@ const RemoveObject: React.FC = () => {
           <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
             <Eraser className="w-12 h-12 mb-3 opacity-60" />
             <p className="text-sm text-center">
-              Upload an image, describe the object, then click <b>Remove Object</b> to see the result here.
+              Upload an image, describe the object, then click{" "}
+              <b>Remove Object</b> to see the result here.
             </p>
           </div>
         )}

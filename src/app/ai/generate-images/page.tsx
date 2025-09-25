@@ -54,7 +54,7 @@ const GenerateImage: React.FC = () => {
         style: selectedStyle,
       };
       const { data } = await axios.post(
-        "http://localhost:3000/api/ai/image-generation",
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/ai/image-generation`,
         obj,
         {
           headers: {

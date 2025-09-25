@@ -18,7 +18,9 @@ import toast from "react-hot-toast";
 const RemoveBackground: React.FC = () => {
   const [image, setImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [removedBackground, setRemovedBackground] = useState<string | null>(null);
+  const [removedBackground, setRemovedBackground] = useState<string | null>(
+    null
+  );
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const { getToken } = useAuth();
@@ -48,7 +50,7 @@ const RemoveBackground: React.FC = () => {
       formdata.append("image", imageFile);
 
       const { data } = await axios.post(
-        "http://localhost:3000/api/ai/remove-background",
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/ai/remove-background`,
         formdata,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -142,7 +144,11 @@ const RemoveBackground: React.FC = () => {
             disabled={loading}
             className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-2 text-sm rounded-lg shadow-md disabled:opacity-70"
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Scissors className="w-5 h-5" />}
+            {loading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Scissors className="w-5 h-5" />
+            )}
             {loading ? "Processing..." : "Remove Background"}
           </button>
 
@@ -188,7 +194,8 @@ const RemoveBackground: React.FC = () => {
           <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
             <ImageIcon className="w-12 h-12 mb-3 opacity-60" />
             <p className="text-sm text-center">
-              Upload an image and click <b>Remove Background</b> to see the result here.
+              Upload an image and click <b>Remove Background</b> to see the
+              result here.
             </p>
           </div>
         )}
