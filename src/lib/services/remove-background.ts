@@ -2,7 +2,11 @@ import axios from "axios";
 
 export const removeBackground = async (photo: Buffer): Promise<Buffer> => {
   const formData = new FormData();
-  formData.append("image_file", new Blob([photo], { type: "image/jpeg" }), "image.jpg");
+  formData.append(
+    "image_file",
+    new Blob([new Uint8Array(photo)], { type: "image/jpeg" }),
+    "image.jpg"
+  );
 
   const response = await axios.post(
     "https://clipdrop-api.co/remove-background/v1",

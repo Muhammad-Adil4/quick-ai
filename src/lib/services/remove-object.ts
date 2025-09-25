@@ -13,9 +13,10 @@ export const removeImageBackgroundObject = async ({
     const formData = new FormData();
     formData.append(
       "image_file",
-      new Blob([image], { type: "image/jpeg" }),
+      new Blob([new Uint8Array(image)], { type: "image/jpeg" }),
       "image.jpg"
     );
+
     formData.append("prompt", prompt);
 
     const response = await axios.post(
@@ -24,7 +25,7 @@ export const removeImageBackgroundObject = async ({
       {
         headers: {
           "x-api-key": process.env.CLIPDROP_API_KEY || "",
-          // Content-Type set automatically by FormData
+          // Content-Type will be set automatically by FormData
         },
         responseType: "arraybuffer",
       }
