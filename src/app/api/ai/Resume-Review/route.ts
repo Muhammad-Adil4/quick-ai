@@ -2,7 +2,7 @@ import { checkUserPlan } from "@/lib/auth";
 import Ai from "@/lib/services/geminiService";
 import { getAuth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
-import pdfParse from "pdf-parse/lib/pdf-parse.js";
+import pdfParse from "pdf-parse";
 import mammoth from "mammoth"; // Added for DOCX parsing
 import { prisma } from "@/lib/prisma";
 
