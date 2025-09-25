@@ -25,7 +25,6 @@ export default function WriteArticle() {
   const [error, setError] = useState<string>("");
   const [article, setArticle] = useState<string>("");
   const {getToken } = useAuth()
-  const   token = getToken()
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");

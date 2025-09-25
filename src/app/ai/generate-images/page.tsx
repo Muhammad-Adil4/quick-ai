@@ -3,6 +3,9 @@
 import React, { useState, FormEvent } from "react";
 import { Image as ImageIcon, Sparkles, Loader2, RefreshCw } from "lucide-react";
 import Image from "next/image";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { useAuth } from "@clerk/nextjs";
 
 const Styles: { name: string; color: string }[] = [
   { name: "Realistic", color: "bg-green-100 text-green-700 border-green-300" },
@@ -23,6 +26,7 @@ const GenerateImage: React.FC = () => {
   const [image, setImage] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const { getToken } = useAuth();
 
   const handleForm = async (e: FormEvent) => {
     e.preventDefault();
@@ -35,12 +39,30 @@ const GenerateImage: React.FC = () => {
 
     setLoading(true);
     try {
-      await new Promise((res) => setTimeout(res, 1500));
-      setImage(
-        `https://picsum.photos/seed/${encodeURIComponent(input)}-style-${selectedStyle}/600/400`
+      const token = await getToken();
+      const obj = {
+        topic: input,
+        style: selectedStyle,
+      };
+      const { data } = await axios.post(
+        "http://localhost:3000/api/ai/image-generation",
+        obj,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
-    } catch {
-      setError("❌ Failed to generate image. Try again.");
+
+      if (data.success) {
+        toast.success(data.message);
+        setImage(data.generatedImageData.content);
+      } else {
+        toast.error(data.message);
+        setError(data.message);
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || error.message || "Something went wrong!");
     } finally {
       setLoading(false);
     }
@@ -51,6 +73,25 @@ const GenerateImage: React.FC = () => {
     setSelectedStyle("Realistic");
     setImage("");
     setError("");
+  };
+
+  // ✅ Download image using fetch + blob
+  const handleDownload = async () => {
+    if (!image) return;
+    try {
+      const response = await fetch(image);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "generated-image.png";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error("Failed to download image.");
+    }
   };
 
   return (
@@ -87,9 +128,7 @@ const GenerateImage: React.FC = () => {
                   key={style.name}
                   onClick={() => setSelectedStyle(style.name)}
                   className={`text-xs px-3 sm:px-4 py-1 rounded-full border cursor-pointer transition ${
-                    isSelected
-                      ? style.color
-                      : "text-gray-500 border-gray-300 hover:bg-gray-100"
+                    isSelected ? style.color : "text-gray-500 border-gray-300 hover:bg-gray-100"
                   }`}
                   style={{ boxShadow: isSelected ? "0 2px 4px -1px rgba(0,0,0,0.1)" : "none" }}
                 >
@@ -153,14 +192,13 @@ const GenerateImage: React.FC = () => {
                   style={{ boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.05)" }}
                 />
               </div>
-              <a
-                href={image}
-                download="generated-image.png"
+              <button
+                onClick={handleDownload}
                 className="px-3 sm:px-4 py-2 text-xs sm:text-sm bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
                 style={{ boxShadow: "0 2px 4px -1px rgba(0,0,0,0.1)" }}
               >
                 Download Image
-              </a>
+              </button>
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center text-xs sm:text-sm text-gray-400">
